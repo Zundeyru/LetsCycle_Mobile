@@ -36,7 +36,11 @@ export default function LoginScreen() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.back}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kembali ke beranda"
+            onPress={() => router.replace('/(tabs)')}
+            style={styles.back}>
             <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.forest} />
           </Pressable>
           <View style={styles.brand}>
