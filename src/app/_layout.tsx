@@ -76,6 +76,10 @@ function RootNavigator() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen
+        name="camera"
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', contentStyle: { backgroundColor: '#000' } }}
+      />
     </Stack>
   );
 }

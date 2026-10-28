@@ -29,11 +29,11 @@ export function HomeHeader() {
           <View style={styles.greeting}>
             <Text style={styles.hi}>Hi,</Text>
             <Text numberOfLines={1} style={styles.name}>
-              {user.getName().split(' ')[0]}
+              {user.name.split(' ')[0]}
             </Text>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.getName().charAt(0).toUpperCase()}</Text>
+            <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
           </View>
         </View>
       ) : (

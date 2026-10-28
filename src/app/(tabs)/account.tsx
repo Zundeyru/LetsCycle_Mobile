@@ -36,11 +36,11 @@ export default function AccountScreen() {
 
         <Card style={styles.profile}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.getName().charAt(0).toUpperCase() ?? '?'}</Text>
+            <Text style={styles.avatarText}>{user?.name.charAt(0).toUpperCase() ?? '?'}</Text>
           </View>
           <View style={styles.profileCopy}>
-            <Text style={styles.name}>{user?.getName() ?? 'Pengguna'}</Text>
-            <Text style={styles.email}>{user?.getEmail() ?? 'Akun belum tersedia'}</Text>
+            <Text style={styles.name}>{user?.name ?? 'Pengguna'}</Text>
+            <Text style={styles.email}>{user?.email ?? 'Akun belum tersedia'}</Text>
             <View style={styles.member}>
               <MaterialCommunityIcons name="leaf" size={12} color={Colors.primary} />
               <Text style={styles.memberText}>Anggota LetCycle</Text>

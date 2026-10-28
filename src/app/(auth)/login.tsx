@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { useAuth } from '@/context/AuthContext';
-import { AuthError } from '@/types/AuthError';
+import { AuthError } from '@/shared/errors';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 
 export default function LoginScreen() {
@@ -66,7 +66,7 @@ export default function LoginScreen() {
               label="Kata sandi"
               value={password}
               onChangeText={setPassword}
-              placeholder="Minimal 6 karakter"
+              placeholder="Minimal 8 karakter, huruf & angka"
               secureTextEntry
               textContentType="password"
               returnKeyType="done"
@@ -86,7 +86,7 @@ export default function LoginScreen() {
               </Pressable>
             </Link>
           </View>
-          <Text style={styles.note}>Penyimpanan akun lokal untuk tahap belajar.</Text>
+          <Text style={styles.note}>Akun tersimpan aman di server LetCycle.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

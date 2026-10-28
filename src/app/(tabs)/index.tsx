@@ -8,6 +8,7 @@ import { HomeFooter } from '@/components/home/HomeFooter';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { Hero } from '@/components/home/Hero';
 import { ImpactStats } from '@/components/home/ImpactStats';
+import { PhotoWasteCard } from '@/components/home/PhotoWasteCard';
 import { WasteCategoryGrid } from '@/components/home/WasteCategoryGrid';
 import { WhyItMatters } from '@/components/home/WhyItMatters';
 import { Spacing } from '@/constants/theme';
@@ -21,6 +22,7 @@ export default function HomeScreen() {
         <HomeHeader />
         <Hero />
         <View style={styles.sections}>
+          <PhotoWasteCard />
           <ImpactStats />
           <FeatureList />
           <WhyItMatters />

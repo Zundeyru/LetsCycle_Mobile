@@ -1,5 +1,5 @@
 export const AppStrings = {
   appName: 'LetCycle',
   storageNotice:
-    'Akun disimpan secara lokal untuk tahap pembelajaran. Jangan gunakan data pribadi penting.',
+    'Kata sandi di-hash di server dan sesi login disimpan terenkripsi di perangkatmu.',
 } as const;

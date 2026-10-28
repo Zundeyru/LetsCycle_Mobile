@@ -1,13 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 
-import { User } from '@/models/User';
-import { UserRepository } from '@/repositories/UserRepository';
-import { AuthService } from '@/services/AuthService';
-import { FileStorage } from '@/services/FileStorage';
+import { AuthApi } from '@/lib/api/authApi';
+import { TokenStorage } from '@/lib/storage/tokenStorage';
+import { isAuthError } from '@/shared/errors';
+import type { AuthSessionResponse, PublicUser } from '@/shared/types/auth';
+import { AuthValidator } from '@/shared/validators/authValidator';
 
 interface AuthContextValue {
-  user: User | null;
+  user: PublicUser | null;
   isReady: boolean;
   initializationError: string | null;
   login(email: string, password: string): Promise<void>;
@@ -18,20 +19,25 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+async function loadCurrentUser(): Promise<PublicUser | null> {
+  const token = await TokenStorage.get();
+  if (!token && !TokenStorage.usesCookieSession) return null;
+
+  try {
+    return (await AuthApi.me(token)).user;
+  } catch (error) {
+    if (isAuthError(error) && error.code === 'UNAUTHORIZED') {
+      await TokenStorage.clear();
+      return null;
+    }
+    throw error;
+  }
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
-  const storage = useMemo(() => new FileStorage(), []);
-  const service = useMemo(
-    () => new AuthService(new UserRepository(storage), storage),
-    [storage],
-  );
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<PublicUser | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
-
-  const loadCurrentUser = useCallback(async () => {
-    await storage.initialize();
-    return service.getCurrentUser();
-  }, [service, storage]);
 
   const retryInitialization = useCallback(async () => {
     setIsReady(false);
@@ -43,7 +49,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       setIsReady(true);
     }
-  }, [loadCurrentUser]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,21 +69,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       isMounted = false;
     };
-  }, [loadCurrentUser]);
+  }, []);
+
+  const startSession = useCallback(async (session: AuthSessionResponse) => {
+    await TokenStorage.set(session.token);
+    setUser(session.user);
+  }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => setUser(await service.login(email, password)),
-    [service],
+    async (email: string, password: string) => {
+      // Validasi di client hanya untuk umpan balik cepat; server tetap memvalidasi ulang.
+      const body = AuthValidator.validateLogin({ email, password });
+      await startSession(await AuthApi.login(body));
+    },
+    [startSession],
   );
+
   const register = useCallback(
-    async (name: string, email: string, password: string, confirmation: string) =>
-      setUser(await service.register(name, email, password, confirmation)),
-    [service],
+    async (name: string, email: string, password: string, confirmation: string) => {
+      const body = AuthValidator.validateRegistration({ name, email, password, confirmation });
+      await startSession(await AuthApi.register(body));
+    },
+    [startSession],
   );
+
   const logout = useCallback(async () => {
-    await service.logout();
-    setUser(null);
-  }, [service]);
+    const token = await TokenStorage.get();
+    try {
+      await AuthApi.logout(token);
+    } finally {
+      // Tetap keluar secara lokal walaupun server tidak terjangkau.
+      await TokenStorage.clear();
+      setUser(null);
+    }
+  }, []);
 
   const value = useMemo(
     () => ({

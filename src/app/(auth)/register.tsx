@@ -8,7 +8,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { useAuth } from '@/context/AuthContext';
 import { AppStrings } from '@/constants/strings';
-import { AuthError } from '@/types/AuthError';
+import { AuthError } from '@/shared/errors';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 
 export default function RegisterScreen() {
@@ -54,7 +54,7 @@ export default function RegisterScreen() {
           <View style={styles.form}>
             <Input label="Nama lengkap" value={name} onChangeText={setName} placeholder="Nama kamu" autoCapitalize="words" textContentType="name" />
             <Input label="Email" value={email} onChangeText={setEmail} placeholder="nama@email.com" keyboardType="email-address" textContentType="emailAddress" />
-            <Input label="Kata sandi" value={password} onChangeText={setPassword} placeholder="Minimal 6 karakter" secureTextEntry textContentType="newPassword" />
+            <Input label="Kata sandi" value={password} onChangeText={setPassword} placeholder="Minimal 8 karakter, huruf & angka" secureTextEntry textContentType="newPassword" />
             <Input label="Konfirmasi kata sandi" value={confirmation} onChangeText={setConfirmation} placeholder="Ketik ulang kata sandi" secureTextEntry textContentType="newPassword" />
             {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
             <Button loading={loading} onPress={() => void handleRegister()} style={styles.submit}>
