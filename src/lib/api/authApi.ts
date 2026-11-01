@@ -9,13 +9,12 @@ import { apiRequest } from './client';
 
 export const AuthApi = {
   register: (body: RegisterRequest) =>
-    apiRequest<AuthSessionResponse>('/api/auth/register', { method: 'POST', body }),
+    apiRequest<AuthSessionResponse>('/api/auth/register', { method: 'POST', body, auth: false }),
 
   login: (body: LoginRequest) =>
-    apiRequest<AuthSessionResponse>('/api/auth/login', { method: 'POST', body }),
+    apiRequest<AuthSessionResponse>('/api/auth/login', { method: 'POST', body, auth: false }),
 
-  logout: (token: string | null) =>
-    apiRequest<{ success: true }>('/api/auth/logout', { method: 'POST', body: {}, token }),
+  logout: () => apiRequest<{ success: true }>('/api/auth/logout', { method: 'POST', body: {} }),
 
-  me: (token: string | null) => apiRequest<MeResponse>('/api/auth/me', { token }),
+  me: () => apiRequest<MeResponse>('/api/auth/me'),
 };

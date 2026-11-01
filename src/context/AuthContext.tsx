@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { PropsWithChildren } from 'react';
 
 import { AuthApi } from '@/lib/api/authApi';
+import { setUnauthorizedHandler } from '@/lib/api/client';
 import { TokenStorage } from '@/lib/storage/tokenStorage';
 import { isAuthError } from '@/shared/errors';
 import type { AuthSessionResponse, PublicUser } from '@/shared/types/auth';
@@ -24,7 +25,7 @@ async function loadCurrentUser(): Promise<PublicUser | null> {
   if (!token && !TokenStorage.usesCookieSession) return null;
 
   try {
-    return (await AuthApi.me(token)).user;
+    return (await AuthApi.me()).user;
   } catch (error) {
     if (isAuthError(error) && error.code === 'UNAUTHORIZED') {
       await TokenStorage.clear();
@@ -49,6 +50,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       setIsReady(true);
     }
+  }, []);
+
+  // Response interceptor memanggil ini saat server menjawab 401 UNAUTHORIZED di request mana pun.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void TokenStorage.clear();
+      setUser(null);
+    });
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   useEffect(() => {
@@ -94,9 +104,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 
   const logout = useCallback(async () => {
-    const token = await TokenStorage.get();
     try {
-      await AuthApi.logout(token);
+      await AuthApi.logout();
     } finally {
       // Tetap keluar secara lokal walaupun server tidak terjangkau.
       await TokenStorage.clear();
