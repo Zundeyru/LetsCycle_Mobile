@@ -19,15 +19,15 @@ async function buildPhotoForm(localUri: string): Promise<FormData> {
 }
 
 export const PhotosApi = {
-  list: (token: string | null) => apiRequest<PhotoListResponse>('/api/photos', { token }),
+  list: () => apiRequest<PhotoListResponse>('/api/photos'),
 
-  async upload(token: string | null, localUri: string): Promise<PhotoDto> {
+  async upload(localUri: string): Promise<PhotoDto> {
     const form = await buildPhotoForm(localUri);
-    return (await apiRequest<PhotoUploadResponse>('/api/photos', { method: 'POST', form, token })).photo;
+    return (await apiRequest<PhotoUploadResponse>('/api/photos', { method: 'POST', form })).photo;
   },
 
-  remove: (token: string | null, id: string) =>
-    apiRequest<{ success: true }>(`/api/photos/${encodeURIComponent(id)}`, { method: 'DELETE', token }),
+  remove: (id: string) =>
+    apiRequest<{ success: true }>(`/api/photos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   /** Source untuk expo-image: native mengirim token lewat header, web memakai cookie sesi. */
   imageSource: (token: string | null, photo: PhotoDto) => ({

@@ -23,9 +23,10 @@ export function usePhotos() {
     setLoading(true);
     setError('');
     try {
+      // Token hanya dipakai untuk memuat gambar (expo-image tidak lewat apiRequest).
       const sessionToken = await TokenStorage.get();
       setToken(sessionToken);
-      setPhotos((await PhotosApi.list(sessionToken)).photos);
+      setPhotos((await PhotosApi.list()).photos);
     } catch (requestError) {
       setError(isAuthError(requestError) ? requestError.message : 'Gagal memuat foto.');
     } finally {
@@ -41,10 +42,10 @@ export function usePhotos() {
 
   const remove = useCallback(
     async (id: string) => {
-      await PhotosApi.remove(token, id);
+      await PhotosApi.remove(id);
       setPhotos((current) => current.filter((photo) => photo.id !== id));
     },
-    [token],
+    [],
   );
 
   return { photos, token, loading, error, refresh, remove };

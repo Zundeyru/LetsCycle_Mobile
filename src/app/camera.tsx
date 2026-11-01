@@ -13,7 +13,6 @@ import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { PhotosApi } from '@/lib/api/photosApi';
 import { CapturedPhotoStore } from '@/lib/camera/capturedPhotoStore';
-import { TokenStorage } from '@/lib/storage/tokenStorage';
 import { isAuthError } from '@/shared/errors';
 
 const flashCycle: FlashMode[] = ['off', 'auto', 'on'];
@@ -92,7 +91,7 @@ export default function CameraScreen() {
     setError('');
     setIsUploading(true);
     try {
-      await PhotosApi.upload(await TokenStorage.get(), photo.uri);
+      await PhotosApi.upload(photo.uri);
       close();
     } catch (uploadError) {
       setError(isAuthError(uploadError) ? uploadError.message : 'Gagal mengunggah foto. Coba lagi.');
