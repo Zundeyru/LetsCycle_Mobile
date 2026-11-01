@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,8 +13,12 @@ import { PhotoWasteCard } from '@/components/home/PhotoWasteCard';
 import { WasteCategoryGrid } from '@/components/home/WasteCategoryGrid';
 import { WhyItMatters } from '@/components/home/WhyItMatters';
 import { Spacing } from '@/constants/theme';
+import { useShake } from '@/hooks/useShake';
 
 export default function HomeScreen() {
+  // Goyangkan ponsel untuk langsung membuka kamera (potret sampah).
+  useShake(() => router.push('/camera'));
+
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView

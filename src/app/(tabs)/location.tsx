@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/common/Card';
+import { CompassCard } from '@/components/location/CompassCard';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 
 const locations = [
@@ -18,6 +19,8 @@ export default function LocationScreen() {
         <Text style={styles.eyebrow}>JELAJAHI SEKITARMU</Text>
         <Text style={styles.title}>Titik setor terdekat</Text>
         <Text style={styles.subtitle}>Pilih titik yang paling nyaman untuk setor sampahmu.</Text>
+
+        <CompassCard />
 
         <View style={styles.mapPlaceholder}>
           <View style={styles.roadHorizontal} />
