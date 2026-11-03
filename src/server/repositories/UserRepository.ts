@@ -1,5 +1,5 @@
 import { AuthError } from '@/shared/errors';
-import type { JsonDatabase, StoredUser } from '@/server/db/JsonDatabase';
+import type { JsonDatabase, PhotoMimeType, StoredUser } from '@/server/db/JsonDatabase';
 import type { IUserRepository } from '@/server/repositories/types';
 
 export class UserRepository implements IUserRepository {
@@ -20,6 +20,28 @@ export class UserRepository implements IUserRepository {
         throw new AuthError('Email ini sudah terdaftar.', 'EMAIL_TAKEN');
       }
       data.users.push(user);
+    });
+  }
+
+  setAvatar(
+    userId: string,
+    avatar: { fileName: string; mimeType: PhotoMimeType } | null,
+  ): Promise<{ user: StoredUser; previousFileName?: string }> {
+    return this.db.transaction((data) => {
+      const user = data.users.find((saved) => saved.id === userId);
+      if (!user) throw new AuthError('Sesi berakhir. Silakan masuk kembali.', 'UNAUTHORIZED');
+
+      const previousFileName = user.avatarFileName;
+      if (avatar) {
+        user.avatarFileName = avatar.fileName;
+        user.avatarMimeType = avatar.mimeType;
+        user.avatarUpdatedAt = new Date().toISOString();
+      } else {
+        delete user.avatarFileName;
+        delete user.avatarMimeType;
+        delete user.avatarUpdatedAt;
+      }
+      return { user: { ...user }, previousFileName };
     });
   }
 }

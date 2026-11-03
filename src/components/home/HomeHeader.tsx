@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { UserAvatar } from '@/components/common/UserAvatar';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 import { AppStrings } from '@/constants/strings';
@@ -32,9 +33,12 @@ export function HomeHeader() {
               {user.name.split(' ')[0]}
             </Text>
           </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Buka profil"
+            onPress={() => router.navigate('/(tabs)/account')}>
+            <UserAvatar size={36} />
+          </Pressable>
         </View>
       ) : (
         <View style={styles.authActions}>
@@ -76,15 +80,6 @@ const styles = StyleSheet.create({
   greeting: { alignItems: 'flex-end', maxWidth: 100 },
   hi: { color: '#dbead9', fontFamily: FontFamily.body, fontSize: 10 },
   name: { color: '#fff', fontFamily: FontFamily.semiBold, fontSize: 12, maxWidth: 100 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.lime,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { color: Colors.forest, fontFamily: FontFamily.semiBold, fontSize: 15 },
   authActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   login: { color: '#fff', fontFamily: FontFamily.medium, fontSize: 12 },
   register: {

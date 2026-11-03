@@ -16,6 +16,7 @@ export const ServerConfig = {
     loginPerEmail: 5,
     registerPerIp: 10,
     photoUploadsPerUser: 30,
+    avatarUpdatesPerUser: 10,
   },
   maxBodyBytes: 10 * 1024,
   photos: {

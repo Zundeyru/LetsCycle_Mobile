@@ -10,6 +10,10 @@ export interface StoredUser {
   email: string;
   passwordHash: string;
   createdAt: string;
+  /** Nama file foto profil buatan server, bila ada. */
+  avatarFileName?: string;
+  avatarMimeType?: PhotoMimeType;
+  avatarUpdatedAt?: string;
 }
 
 export interface StoredSession {

@@ -49,7 +49,13 @@ src/
 | GET    | `/api/photos/:id`    | Isi gambar — hanya pemiliknya       |
 | DELETE | `/api/photos/:id`    | Hapus foto — hanya pemiliknya       |
 
-Semua endpoint `/api/photos` butuh sesi login (header `Authorization: Bearer <token>` atau cookie sesi).
+| GET    | `/api/profile/avatar` | Foto profil user yang login        |
+| PUT    | `/api/profile/avatar` | Ganti foto profil, `multipart/form-data` field `photo` (maks 10x / 15 menit) |
+| DELETE | `/api/profile/avatar` | Hapus foto profil                  |
+
+Data user (`/api/auth/me`, login, register) berisi `avatarUrl` (atau `null`).
+
+Semua endpoint `/api/photos` dan `/api/profile` butuh sesi login (header `Authorization: Bearer <token>` atau cookie sesi).
 
 Sukses mengembalikan JSON data; gagal mengembalikan `{ "error": { "code", "message" } }` dengan status 400/401/409/413/429/500.
 

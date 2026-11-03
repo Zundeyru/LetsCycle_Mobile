@@ -1,4 +1,4 @@
-import type { StoredPhoto, StoredSession, StoredUser } from '@/server/db/JsonDatabase';
+import type { PhotoMimeType, StoredPhoto, StoredSession, StoredUser } from '@/server/db/JsonDatabase';
 
 export interface IPhotoRepository {
   /** Terbaru lebih dulu. */
@@ -22,6 +22,11 @@ export interface IUserRepository {
   findById(id: string): Promise<StoredUser | null>;
   /** Melempar AuthError EMAIL_TAKEN bila email sudah dipakai. */
   create(user: StoredUser): Promise<void>;
+  /** Mengganti/menghapus foto profil; mengembalikan user baru dan nama file lama (untuk dihapus). */
+  setAvatar(
+    userId: string,
+    avatar: { fileName: string; mimeType: PhotoMimeType } | null,
+  ): Promise<{ user: StoredUser; previousFileName?: string }>;
 }
 
 export interface ISessionRepository {

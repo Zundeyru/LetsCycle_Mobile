@@ -1,12 +1,15 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Card } from '@/components/common/Card';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { ProfileApi } from '@/lib/api/profileApi';
+import { isAuthError } from '@/shared/errors';
 
 const accountLinks = [
   { label: 'Data diri', icon: 'account-edit-outline' as const },
@@ -15,8 +18,34 @@ const accountLinks = [
 ];
 
 export default function AccountScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [logoutError, setLogoutError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
+  const [removingAvatar, setRemovingAvatar] = useState(false);
+
+  const removeAvatar = async () => {
+    setAvatarError('');
+    setRemovingAvatar(true);
+    try {
+      updateUser(await ProfileApi.removeAvatar());
+    } catch (error) {
+      setAvatarError(isAuthError(error) ? error.message : 'Gagal menghapus foto profil.');
+    } finally {
+      setRemovingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    const message = 'Hapus foto profilmu?';
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) void removeAvatar();
+      return;
+    }
+    Alert.alert('Foto profil', message, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Hapus', style: 'destructive', onPress: () => void removeAvatar() },
+    ]);
+  };
 
   const handleLogout = async () => {
     setLogoutError('');
@@ -35,9 +64,17 @@ export default function AccountScreen() {
         <Text style={styles.title}>Profil</Text>
 
         <Card style={styles.profile}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.name.charAt(0).toUpperCase() ?? '?'}</Text>
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ganti foto profil dengan kamera"
+            disabled={!user}
+            onPress={() => router.push({ pathname: '/camera', params: { purpose: 'avatar' } })}
+            style={({ pressed }) => [styles.avatarButton, pressed && styles.pressed]}>
+            <UserAvatar size={64} />
+            <View style={styles.cameraBadge}>
+              <MaterialCommunityIcons name="camera" size={13} color="#fff" />
+            </View>
+          </Pressable>
           <View style={styles.profileCopy}>
             <Text style={styles.name}>{user?.name ?? 'Pengguna'}</Text>
             <Text style={styles.email}>{user?.email ?? 'Akun belum tersedia'}</Text>
@@ -45,9 +82,16 @@ export default function AccountScreen() {
               <MaterialCommunityIcons name="leaf" size={12} color={Colors.primary} />
               <Text style={styles.memberText}>Anggota LetCycle</Text>
             </View>
+            {user?.avatarUrl ? (
+              <Pressable accessibilityRole="button" hitSlop={6} disabled={removingAvatar} onPress={handleRemoveAvatar}>
+                <Text style={styles.removeAvatar}>{removingAvatar ? 'Menghapus foto...' : 'Hapus foto profil'}</Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.avatarHint}>Ketuk foto untuk memotret foto profil</Text>
+            )}
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={20} color="#94A39A" />
         </Card>
+        {avatarError ? <Text accessibilityRole="alert" style={styles.error}>{avatarError}</Text> : null}
 
         <Text style={styles.sectionTitle}>Pengaturan akun</Text>
         <View style={styles.linkList}>
@@ -82,8 +126,10 @@ const styles = StyleSheet.create({
   eyebrow: { color: Colors.primary, fontFamily: FontFamily.semiBold, fontSize: 9, letterSpacing: 1.2 },
   title: { marginTop: Spacing.sm, marginBottom: Spacing.xl, color: Colors.forest, fontFamily: FontFamily.heading, fontSize: 29 },
   profile: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  avatar: { width: 55, height: 55, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.lime },
-  avatarText: { color: Colors.forest, fontFamily: FontFamily.semiBold, fontSize: 23 },
+  avatarButton: { borderRadius: Radius.pill },
+  cameraBadge: { position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primary, borderWidth: 2, borderColor: Colors.surface },
+  avatarHint: { marginTop: 4, color: Colors.secondaryText, fontFamily: FontFamily.body, fontSize: 8 },
+  removeAvatar: { marginTop: 4, color: Colors.danger, fontFamily: FontFamily.medium, fontSize: 9 },
   profileCopy: { flex: 1, gap: 4 },
   name: { color: Colors.forest, fontFamily: FontFamily.semiBold, fontSize: 13 },
   email: { color: Colors.secondaryText, fontFamily: FontFamily.body, fontSize: 9 },

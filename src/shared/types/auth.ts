@@ -6,6 +6,8 @@ export interface PublicUser {
   name: string;
   email: string;
   createdAt: string;
+  /** Path relatif foto profil (dengan versi untuk cache-busting), atau null. Butuh sesi login. */
+  avatarUrl: string | null;
 }
 
 export interface RegisterRequest {

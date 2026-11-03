@@ -8,7 +8,7 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   /** Dikirim sebagai multipart/form-data; Content-Type diisi otomatis beserta boundary. */
   form?: FormData;

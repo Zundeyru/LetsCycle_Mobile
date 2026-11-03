@@ -2,7 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { CameraCapturedPicture, CameraType, FlashMode } from 'expo-camera';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,8 +12,12 @@ import { Button } from '@/components/common/Button';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { PhotosApi } from '@/lib/api/photosApi';
+import { ProfileApi } from '@/lib/api/profileApi';
 import { CapturedPhotoStore } from '@/lib/camera/capturedPhotoStore';
 import { isAuthError } from '@/shared/errors';
+
+/** `/camera` = foto sampah, `/camera?purpose=avatar` = ganti foto profil. */
+type CameraPurpose = 'waste' | 'avatar';
 
 const flashCycle: FlashMode[] = ['off', 'auto', 'on'];
 const flashIcons: Record<FlashMode, keyof typeof MaterialCommunityIcons.glyphMap> = {
@@ -29,17 +33,36 @@ function close() {
 }
 
 export default function CameraScreen() {
+  const params = useLocalSearchParams<{ purpose?: string }>();
+  const purpose: CameraPurpose = params.purpose === 'avatar' ? 'avatar' : 'waste';
+  const isAvatar = purpose === 'avatar';
+
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [facing, setFacing] = useState<CameraType>('back');
+  const [facing, setFacing] = useState<CameraType>(isAvatar ? 'front' : 'back');
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isReady, setIsReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [photo, setPhoto] = useState<CameraCapturedPicture | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+
+  // Foto profil hanya untuk user yang sudah masuk; jangan minta izin kamera dulu.
+  if (isAvatar && !user) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.gateTitle}>Masuk untuk mengganti foto profil</Text>
+        <View style={styles.gateActions}>
+          <Button onPress={() => router.replace('/(auth)/login')}>Masuk</Button>
+          <Button variant="outline" onPress={close}>
+            Kembali
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   if (!permission) {
     return (
@@ -76,6 +99,20 @@ export default function CameraScreen() {
   const handleUsePhoto = async () => {
     if (!photo || isUploading) return;
 
+    if (isAvatar) {
+      setError('');
+      setIsUploading(true);
+      try {
+        updateUser(await ProfileApi.updateAvatar(photo.uri));
+        close();
+      } catch (uploadError) {
+        setError(isAuthError(uploadError) ? uploadError.message : 'Gagal mengganti foto profil. Coba lagi.');
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
     if (!user) {
       // Tamu: foto hanya disimpan sementara di aplikasi.
       CapturedPhotoStore.set({
@@ -103,7 +140,12 @@ export default function CameraScreen() {
   if (photo) {
     return (
       <View style={styles.container}>
-        <Image source={{ uri: photo.uri }} style={StyleSheet.absoluteFill} contentFit="contain" />
+        <Image
+          source={{ uri: photo.uri }}
+          style={StyleSheet.absoluteFill}
+          contentFit={isAvatar ? 'cover' : 'contain'}
+        />
+        {isAvatar && <AvatarGuide />}
         <View style={[styles.previewPanel, { paddingBottom: Math.max(insets.bottom, Spacing.lg) }]}>
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
           <View style={styles.previewActions}>
@@ -118,7 +160,7 @@ export default function CameraScreen() {
               Ulangi
             </Button>
             <Button style={styles.previewButton} loading={isUploading} onPress={() => void handleUsePhoto()}>
-              {user ? 'Simpan ke akun' : 'Gunakan foto'}
+              {isAvatar ? 'Jadikan foto profil' : user ? 'Simpan ke akun' : 'Gunakan foto'}
             </Button>
           </View>
         </View>
@@ -137,6 +179,7 @@ export default function CameraScreen() {
         onCameraReady={() => setIsReady(true)}
         onMountError={({ message }) => setError(message || 'Kamera tidak dapat dibuka.')}
       />
+      {isAvatar && <AvatarGuide />}
 
       <View style={[styles.topBar, { paddingTop: insets.top + Spacing.sm }]}>
         <IconButton icon="close" label="Tutup kamera" onPress={close} />
@@ -151,7 +194,9 @@ export default function CameraScreen() {
 
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, Spacing.lg) + Spacing.sm }]}>
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-        <Text style={styles.hint}>Posisikan sampah di tengah bingkai</Text>
+        <Text style={styles.hint}>
+          {isAvatar ? 'Posisikan wajahmu di dalam lingkaran' : 'Posisikan sampah di tengah bingkai'}
+        </Text>
         <View style={styles.controls}>
           <View style={styles.sideSlot} />
           <Pressable
@@ -178,6 +223,15 @@ export default function CameraScreen() {
   );
 }
 
+/** Lingkaran panduan: area tengah ini yang tampil sebagai foto profil (crop "cover"). */
+function AvatarGuide() {
+  return (
+    <View pointerEvents="none" style={styles.guideWrapper}>
+      <View style={styles.guideCircle} />
+    </View>
+  );
+}
+
 interface IconButtonProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   label: string;
@@ -199,7 +253,25 @@ function IconButton({ icon, label, onPress }: IconButtonProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+    padding: Spacing.xl,
+    backgroundColor: Colors.background,
+  },
+  gateTitle: { color: Colors.forest, fontFamily: FontFamily.heading, fontSize: 22, textAlign: 'center' },
+  gateActions: { width: '100%', maxWidth: 360, gap: Spacing.md },
+  guideWrapper: { position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' },
+  guideCircle: {
+    width: 260,
+    height: 260,
+    borderRadius: Radius.pill,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.9)',
+    borderStyle: 'dashed',
+  },
   topBar: {
     position: 'absolute',
     top: 0,

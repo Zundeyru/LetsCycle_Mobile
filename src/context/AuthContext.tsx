@@ -10,26 +10,31 @@ import { AuthValidator } from '@/shared/validators/authValidator';
 
 interface AuthContextValue {
   user: PublicUser | null;
+  /** Token sesi (native) untuk request yang tidak lewat apiRequest, mis. gambar. Null di web (pakai cookie). */
+  token: string | null;
   isReady: boolean;
   initializationError: string | null;
   login(email: string, password: string): Promise<void>;
   register(name: string, email: string, password: string, confirmation: string): Promise<void>;
   logout(): Promise<void>;
+  /** Mengganti data user setelah server mengembalikan versi terbaru (mis. foto profil berubah). */
+  updateUser(user: PublicUser): void;
   retryInitialization(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-async function loadCurrentUser(): Promise<PublicUser | null> {
+async function loadCurrentSession(): Promise<{ user: PublicUser | null; token: string | null }> {
   const token = await TokenStorage.get();
-  if (!token && !TokenStorage.usesCookieSession) return null;
+  if (!token && !TokenStorage.usesCookieSession) return { user: null, token: null };
 
   try {
-    return (await AuthApi.me()).user;
+    // Token disisipkan otomatis oleh request interceptor; di sini hanya diteruskan untuk memuat gambar.
+    return { user: (await AuthApi.me()).user, token };
   } catch (error) {
     if (isAuthError(error) && error.code === 'UNAUTHORIZED') {
       await TokenStorage.clear();
-      return null;
+      return { user: null, token: null };
     }
     throw error;
   }
@@ -37,6 +42,7 @@ async function loadCurrentUser(): Promise<PublicUser | null> {
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<PublicUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
@@ -44,7 +50,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsReady(false);
     setInitializationError(null);
     try {
-      setUser(await loadCurrentUser());
+      const session = await loadCurrentSession();
+      setUser(session.user);
+      setToken(session.token);
     } catch (error) {
       setInitializationError(error instanceof Error ? error.message : 'Gagal memuat data akun.');
     } finally {
@@ -56,6 +64,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       void TokenStorage.clear();
+      setToken(null);
       setUser(null);
     });
     return () => setUnauthorizedHandler(null);
@@ -63,9 +72,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let isMounted = true;
-    void loadCurrentUser()
-      .then((activeUser) => {
-        if (isMounted) setUser(activeUser);
+    void loadCurrentSession()
+      .then((session) => {
+        if (!isMounted) return;
+        setUser(session.user);
+        setToken(session.token);
       })
       .catch((error: unknown) => {
         if (isMounted) {
@@ -83,6 +94,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const startSession = useCallback(async (session: AuthSessionResponse) => {
     await TokenStorage.set(session.token);
+    setToken(TokenStorage.usesCookieSession ? null : session.token);
     setUser(session.user);
   }, []);
 
@@ -109,6 +121,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       // Tetap keluar secara lokal walaupun server tidak terjangkau.
       await TokenStorage.clear();
+      setToken(null);
       setUser(null);
     }
   }, []);
@@ -116,14 +129,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo(
     () => ({
       user,
+      token,
       isReady,
       initializationError,
       login,
       register,
       logout,
+      updateUser: setUser,
       retryInitialization,
     }),
-    [initializationError, isReady, login, logout, register, retryInitialization, user],
+    [initializationError, isReady, login, logout, register, retryInitialization, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

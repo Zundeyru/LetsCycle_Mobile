@@ -8,11 +8,13 @@ import { UserRepository } from '@/server/repositories/UserRepository';
 import { RateLimiter } from '@/server/security/rateLimiter';
 import { AuthService } from '@/server/services/AuthService';
 import { PhotoService } from '@/server/services/PhotoService';
+import { ProfileService } from '@/server/services/ProfileService';
 import { LocalPhotoStorage } from '@/server/storage/LocalPhotoStorage';
 
 interface Container {
   authService: AuthService;
   photoService: PhotoService;
+  profileService: ProfileService;
   rateLimiter: RateLimiter;
 }
 
@@ -22,8 +24,13 @@ const globalForContainer = globalThis as typeof globalThis & { __letcycleContain
 export function getContainer(): Container {
   if (!globalForContainer.__letcycleContainer) {
     const db = getDatabase();
+    const users = new UserRepository(db);
     globalForContainer.__letcycleContainer = {
-      authService: new AuthService(new UserRepository(db), new SessionRepository(db)),
+      authService: new AuthService(users, new SessionRepository(db)),
+      profileService: new ProfileService(
+        users,
+        new LocalPhotoStorage(path.resolve(ServerConfig.dataDir, 'avatars')),
+      ),
       photoService: new PhotoService(
         new PhotoRepository(db),
         new LocalPhotoStorage(path.resolve(ServerConfig.dataDir, 'uploads')),

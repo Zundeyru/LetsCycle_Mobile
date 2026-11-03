@@ -3,7 +3,7 @@ import type { PhotoDto } from '@/shared/types/photos';
 import { ServerConfig } from '@/server/config';
 import type { StoredPhoto } from '@/server/db/JsonDatabase';
 import type { IPhotoFileStorage, IPhotoRepository } from '@/server/repositories/types';
-import { detectImageType, extensionByMime } from '@/server/security/imageType';
+import { extensionByMime, validateImage } from '@/server/security/imageType';
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -29,15 +29,7 @@ export class PhotoService {
   ) {}
 
   async upload(userId: string, bytes: Uint8Array): Promise<PhotoDto> {
-    if (bytes.length === 0) throw new AuthError('File foto kosong.', 'VALIDATION');
-    if (bytes.length > ServerConfig.photos.maxBytes) {
-      throw new AuthError('Ukuran foto maksimal 5 MB.', 'PAYLOAD_TOO_LARGE');
-    }
-    const mimeType = detectImageType(bytes);
-    if (!mimeType) {
-      throw new AuthError('Format foto harus JPG, PNG, atau WebP.', 'UNSUPPORTED_MEDIA_TYPE');
-    }
-
+    const mimeType = validateImage(bytes);
     const id = crypto.randomUUID();
     const photo: StoredPhoto = {
       id,

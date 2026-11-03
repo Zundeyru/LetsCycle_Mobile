@@ -8,7 +8,15 @@ import { randomBytes, sha256Hex, toBase64Url } from '@/server/security/crypto';
 import { getDummyPasswordHash, hashPassword, verifyPassword } from '@/server/security/password';
 
 export function toPublicUser(user: StoredUser): PublicUser {
-  return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
+    avatarUrl: user.avatarFileName
+      ? `/api/profile/avatar?v=${encodeURIComponent(user.avatarUpdatedAt ?? '')}`
+      : null,
+  };
 }
 
 export class AuthService {

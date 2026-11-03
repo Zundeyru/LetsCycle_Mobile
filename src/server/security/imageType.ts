@@ -1,3 +1,5 @@
+import { AuthError } from '@/shared/errors';
+import { ServerConfig } from '@/server/config';
 import type { PhotoMimeType } from '@/server/db/JsonDatabase';
 
 export const extensionByMime: Record<PhotoMimeType, string> = {
@@ -21,4 +23,22 @@ export function detectImageType(bytes: Uint8Array): PhotoMimeType | null {
     return 'image/webp';
   }
   return null;
+}
+
+/** Validasi ukuran & jenis gambar; mengembalikan MIME hasil deteksi isi file. */
+export function validateImage(bytes: Uint8Array): PhotoMimeType {
+  if (bytes.length === 0) throw new AuthError('File foto kosong.', 'VALIDATION');
+  if (bytes.length > ServerConfig.photos.maxBytes) {
+    throw new AuthError('Ukuran foto maksimal 5 MB.', 'PAYLOAD_TOO_LARGE');
+  }
+  const mimeType = detectImageType(bytes);
+  if (!mimeType) {
+    throw new AuthError('Format foto harus JPG, PNG, atau WebP.', 'UNSUPPORTED_MEDIA_TYPE');
+  }
+  return mimeType;
+}
+
+/** Nama file acak buatan server; tidak pernah memakai nama dari client. */
+export function generateImageFileName(mimeType: PhotoMimeType): string {
+  return `${crypto.randomUUID()}.${extensionByMime[mimeType]}`;
 }
