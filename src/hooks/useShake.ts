@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { Accelerometer } from 'expo-sensors';
 import { useCallback, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 
 interface ShakeOptions {
   /** Selisih gaya dari gravitasi (satuan g) yang dianggap guncangan. 1 g = diam. */
@@ -31,7 +32,10 @@ export function useShake(
       let lastShakeAt = 0;
 
       async function start() {
-        // Sensor belum tentu ada (mis. laptop/browser desktop), jadi cek dulu.
+        // Web: modul Accelerometer expo-sensors tidak punya addListener (crash "addListener is not a
+        // function"), dan datanya berupa sudut orientasi, bukan satuan g. Guncangan hanya untuk native.
+        if (Platform.OS === 'web') return;
+        // Sensor belum tentu ada (mis. emulator tanpa sensor), jadi cek dulu.
         if (!(await Accelerometer.isAvailableAsync())) return;
         // Izin runtime: native biasanya langsung granted, tetapi tetap diminta sesuai alurnya.
         const { granted } = await Accelerometer.requestPermissionsAsync();
@@ -49,7 +53,8 @@ export function useShake(
         });
       }
 
-      void start();
+      // Fitur tambahan: bila sensor gagal dipasang, cukup nonaktif tanpa membuat aplikasi crash.
+      start().catch((error: unknown) => console.warn('Deteksi guncangan tidak tersedia:', error));
       return () => {
         cancelled = true;
         subscription?.remove();

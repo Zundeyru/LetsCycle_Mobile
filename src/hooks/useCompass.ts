@@ -53,7 +53,11 @@ export function useCompass() {
         });
       }
 
-      void start();
+      // Bila sensor gagal dipasang, tampilkan "tidak tersedia" alih-alih membuat aplikasi crash.
+      start().catch((error: unknown) => {
+        console.warn('Sensor kompas tidak tersedia:', error);
+        if (!cancelled) setStatus('unavailable');
+      });
       return () => {
         cancelled = true;
         subscription?.remove();
