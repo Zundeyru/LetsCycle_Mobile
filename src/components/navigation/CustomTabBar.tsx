@@ -21,7 +21,7 @@ const tabs: {
 export function CustomTabBar() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
-  const activeRoute = segments[1] ?? 'index';
+  const activeRoute = segments.slice(1)[0] ?? 'index';
 
   return (
     <View style={styles.wrapper}>

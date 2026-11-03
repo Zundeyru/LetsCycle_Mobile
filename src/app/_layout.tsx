@@ -47,7 +47,7 @@ function RootNavigator() {
 
     if (segments[0] === '(auth)' && user) {
       router.replace('/(tabs)');
-    } else if (segments[0] === '(tabs)' && segments[1] === 'account' && !user) {
+    } else if (segments[0] === '(tabs)' && segments.slice(1)[0] === 'account' && !user) {
       router.replace('/(auth)/login');
     }
   }, [isReady, segments, user]);

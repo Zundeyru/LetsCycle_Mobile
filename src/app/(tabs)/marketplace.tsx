@@ -1,8 +1,10 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { StateView } from '@/components/common/StateView';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { useFetchProducts } from '@/hooks/useFetchProducts';
 
 const categories = [
   { name: 'Perlengkapan rumah', icon: 'home-outline' as const, color: '#B4D2A5' },
@@ -11,14 +13,9 @@ const categories = [
   { name: 'Gaya hidup', icon: 'bottle-tonic-outline' as const, color: '#A9CFCA' },
 ];
 
-const products = [
-  { name: 'Pot tanaman RePlast', material: 'Plastik daur ulang', price: 'Rp 35.000', icon: 'flower-tulip-outline' as const, tone: '#E1EAD8' },
-  { name: 'Tote bag anyam', material: 'Kreasi kemasan', price: 'Rp 48.000', icon: 'shopping-outline' as const, tone: '#F4E3CE' },
-  { name: 'Tempat pensil warna', material: 'Botol plastik', price: 'Rp 22.000', icon: 'pencil-outline' as const, tone: '#DAE8E8' },
-  { name: 'Lampu meja ReLight', material: 'Material guna ulang', price: 'Rp 89.000', icon: 'lamp-outline' as const, tone: '#ECE5CF' },
-];
-
 export default function MarketplaceScreen() {
+  const { products, status, errorMessage, retry } = useFetchProducts();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -46,23 +43,29 @@ export default function MarketplaceScreen() {
 
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Pilihan untukmu</Text>
-          <Text style={styles.soon}>SEGERA HADIR</Text>
         </View>
-        <View style={styles.productGrid}>
-          {products.map((product) => (
-            <View key={product.name} style={styles.product}>
-              <View style={[styles.productImage, { backgroundColor: product.tone }]}>
-                <MaterialCommunityIcons name={product.icon} size={43} color={Colors.forest} />
-                <View style={styles.recycledBadge}>
-                  <MaterialCommunityIcons name="recycle" size={11} color={Colors.primary} />
+        {status === 'success' ? (
+          <View style={styles.productGrid}>
+            {products.map((product) => (
+              <View key={product.id} style={styles.product}>
+                <View style={styles.productImage}>
+                  <Image source={{ uri: product.image }} style={styles.productPhoto} resizeMode="contain" />
                 </View>
+                <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
+                <Text style={styles.material} numberOfLines={1}>{product.category}</Text>
+                <Text style={styles.price}>
+                  {new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'USD',
+                    maximumFractionDigits: 2,
+                  }).format(product.price)}
+                </Text>
               </View>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.material}>{product.material}</Text>
-              <Text style={styles.price}>{product.price}</Text>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        ) : (
+          <StateView status={status} message={errorMessage} onRetry={retry} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -82,11 +85,10 @@ const styles = StyleSheet.create({
   categoryIcon: { width: 56, height: 56, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   categoryLabel: { color: Colors.secondaryText, fontFamily: FontFamily.medium, fontSize: 8, textAlign: 'center' },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.md, marginBottom: Spacing.lg },
-  soon: { color: Colors.orange, fontFamily: FontFamily.semiBold, fontSize: 8, letterSpacing: 0.6 },
   productGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   product: { width: '48%', gap: 5, marginBottom: Spacing.sm },
-  productImage: { height: 145, marginBottom: 5, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-  recycledBadge: { position: 'absolute', top: 10, right: 10, width: 25, height: 25, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  productImage: { height: 145, marginBottom: 5, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface },
+  productPhoto: { width: '80%', height: '80%' },
   productName: { color: Colors.text, fontFamily: FontFamily.semiBold, fontSize: 10 },
   material: { color: Colors.secondaryText, fontFamily: FontFamily.body, fontSize: 8 },
   price: { marginTop: 2, color: Colors.primary, fontFamily: FontFamily.semiBold, fontSize: 10 },

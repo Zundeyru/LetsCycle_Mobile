@@ -11,7 +11,7 @@ npx expo start
 
 `npx expo start` sekaligus menjalankan API di `/api/*`. Di perangkat/emulator, request relatif (`/api/...`) otomatis diarahkan ke dev server.
 
-Halaman Home dapat dibuka tanpa akun. Location dan Marketplace saat ini berisi kerangka data contoh, sedangkan Account meminta pengguna masuk.
+Halaman Home dapat dibuka tanpa akun. Location masih berisi data contoh, Marketplace memuat produk dari Fake Store API dan menyediakan state loading/error/offline serta retry, sedangkan Account meminta pengguna masuk.
 
 ## Struktur folder
 
