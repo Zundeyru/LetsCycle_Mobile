@@ -3,14 +3,16 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/common/Card';
 import { SectionHeader } from '@/components/common/SectionHeader';
+import { wasteCategoryVisuals } from '@/components/deposits/wasteCategoryVisuals';
 import { Colors, FontFamily, Spacing } from '@/constants/theme';
+import { formatRupiah, WasteCategories } from '@/shared/wasteCategories';
 
-const categories = [
-  { name: 'Kertas & kardus', price: 'Rp 1.200 / kg', icon: 'newspaper-variant-outline' as const, color: '#A96F45', tint: '#F6E9DB' },
-  { name: 'Plastik', price: 'Rp 2.500 / kg', icon: 'bottle-soda-outline' as const, color: '#328D91', tint: '#E0F0EC' },
-  { name: 'Logam & kaleng', price: 'Rp 4.200 / kg', icon: 'archive-outline' as const, color: '#C56E55', tint: '#F8E8E1' },
-  { name: 'Elektronik', price: 'Sesuai kondisi', icon: 'laptop' as const, color: '#526A85', tint: '#E7ECF3' },
-];
+// Harga diambil dari daftar bersama agar sama dengan estimasi di halaman Setoran.
+const categories = WasteCategories.map((category) => ({
+  name: category.name,
+  price: category.pricePerKg === null ? 'Sesuai kondisi' : `${formatRupiah(category.pricePerKg)} / kg`,
+  ...wasteCategoryVisuals[category.id],
+}));
 
 export function WasteCategoryGrid() {
   return (

@@ -2,6 +2,8 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import type { DepositStatus } from '@/shared/types/deposits';
+import type { WasteCategoryId } from '@/shared/wasteCategories';
 import { ServerConfig } from '@/server/config';
 
 export interface StoredUser {
@@ -40,9 +42,21 @@ export interface DatabaseSchema {
   users: StoredUser[];
   sessions: StoredSession[];
   photos: StoredPhoto[];
+  deposits: StoredDeposit[];
 }
 
-const emptyDatabase = (): DatabaseSchema => ({ users: [], sessions: [], photos: [] });
+export interface StoredDeposit {
+  id: string;
+  userId: string;
+  categoryId: WasteCategoryId;
+  weightKg: number;
+  note?: string;
+  status: DepositStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const emptyDatabase = (): DatabaseSchema => ({ users: [], sessions: [], photos: [], deposits: [] });
 
 /**
  * Database file JSON sederhana untuk pengembangan. Semua operasi diserialkan
@@ -79,7 +93,12 @@ export class JsonDatabase {
   private async load(): Promise<DatabaseSchema> {
     try {
       const parsed = JSON.parse(await readFile(this.filePath, 'utf8')) as Partial<DatabaseSchema>;
-      return { users: parsed.users ?? [], sessions: parsed.sessions ?? [], photos: parsed.photos ?? [] };
+      return {
+        users: parsed.users ?? [],
+        sessions: parsed.sessions ?? [],
+        photos: parsed.photos ?? [],
+        deposits: parsed.deposits ?? [],
+      };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return emptyDatabase();
       throw error;

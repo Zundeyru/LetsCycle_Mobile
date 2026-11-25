@@ -59,6 +59,30 @@ Semua endpoint `/api/photos` dan `/api/profile` butuh sesi login (header `Author
 
 Sukses mengembalikan JSON data; gagal mengembalikan `{ "error": { "code", "message" } }` dengan status 400/401/409/413/429/500.
 
+## Week 8: Catatan Setoran Async (tab Setoran)
+
+Tab **Setoran** mencatat setoran sampah user (kategori + berat) dan menghitung estimasi uang dari harga per kg.
+Data disimpan di backend LetsCycle sendiri (butuh login), diakses dengan `fetch` + `async/await`:
+
+| Endpoint | Keterangan |
+| --- | --- |
+| `GET /api/deposits` | Daftar setoran milik user |
+| `POST /api/deposits` | `{ categoryId, weightKg, note? }` → status awal `scheduled` (maks 30x / 15 menit) |
+| `PATCH /api/deposits/:id` | `{ status: "scheduled" \| "completed" }` |
+
+| Fitur wajib Week 8 | Implementasi |
+| --- | --- |
+| Tampilkan data API | `GET` di dalam `useEffect` (dependency `[]`, cleanup `AbortController`) |
+| Loading indicator | `ActivityIndicator` + "Memuat riwayat setoran..." |
+| Tambah data | form kategori + berat → `POST` |
+| Ubah status | ketuk baris → `PATCH` (optimistic update, dikembalikan bila gagal) |
+| Error handling | `try/catch`, validasi input, pesan lewat `Alert` + tombol Coba Lagi |
+| Refresh data | tombol muat ulang dan tarik-untuk-refresh (`RefreshControl`) |
+
+Kode: `src/app/(tabs)/deposits.tsx` (UI), `src/hooks/useDeposits.ts` (state & logika), `src/lib/api/depositsApi.ts`
+(request), `src/server/services/DepositService.ts` (backend). Harga per kg ada di `src/shared/wasteCategories.ts`, dipakai
+bersama oleh Home, form setoran, dan server (estimasi dihitung di server agar tidak bisa dimanipulasi).
+
 ## Keamanan
 
 - **Password** di-hash di server dengan PBKDF2-HMAC-SHA256 (600.000 iterasi, salt acak 16 byte), dibandingkan secara waktu-konstan. Login dengan email tak terdaftar tetap menjalankan hash agar waktu respons tidak membocorkan email.

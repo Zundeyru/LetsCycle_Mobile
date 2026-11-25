@@ -1,4 +1,14 @@
-import type { PhotoMimeType, StoredPhoto, StoredSession, StoredUser } from '@/server/db/JsonDatabase';
+import type { DepositStatus } from '@/shared/types/deposits';
+import type { PhotoMimeType, StoredDeposit, StoredPhoto, StoredSession, StoredUser } from '@/server/db/JsonDatabase';
+
+export interface IDepositRepository {
+  /** Terbaru lebih dulu. */
+  listByUser(userId: string): Promise<StoredDeposit[]>;
+  /** Melempar AuthError QUOTA_EXCEEDED bila jumlah setoran user sudah maksimal. */
+  create(deposit: StoredDeposit, maxPerUser: number): Promise<void>;
+  /** Hanya mengubah setoran milik user tersebut; null bila tidak ditemukan. */
+  updateStatus(userId: string, id: string, status: DepositStatus): Promise<StoredDeposit | null>;
+}
 
 export interface IPhotoRepository {
   /** Terbaru lebih dulu. */

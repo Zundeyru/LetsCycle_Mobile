@@ -2,17 +2,20 @@ import path from 'node:path';
 
 import { ServerConfig } from '@/server/config';
 import { getDatabase } from '@/server/db/JsonDatabase';
+import { DepositRepository } from '@/server/repositories/DepositRepository';
 import { PhotoRepository } from '@/server/repositories/PhotoRepository';
 import { SessionRepository } from '@/server/repositories/SessionRepository';
 import { UserRepository } from '@/server/repositories/UserRepository';
 import { RateLimiter } from '@/server/security/rateLimiter';
 import { AuthService } from '@/server/services/AuthService';
+import { DepositService } from '@/server/services/DepositService';
 import { PhotoService } from '@/server/services/PhotoService';
 import { ProfileService } from '@/server/services/ProfileService';
 import { LocalPhotoStorage } from '@/server/storage/LocalPhotoStorage';
 
 interface Container {
   authService: AuthService;
+  depositService: DepositService;
   photoService: PhotoService;
   profileService: ProfileService;
   rateLimiter: RateLimiter;
@@ -27,6 +30,7 @@ export function getContainer(): Container {
     const users = new UserRepository(db);
     globalForContainer.__letcycleContainer = {
       authService: new AuthService(users, new SessionRepository(db)),
+      depositService: new DepositService(new DepositRepository(db)),
       profileService: new ProfileService(
         users,
         new LocalPhotoStorage(path.resolve(ServerConfig.dataDir, 'avatars')),

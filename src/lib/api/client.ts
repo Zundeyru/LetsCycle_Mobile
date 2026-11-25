@@ -8,12 +8,14 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const UPLOAD_TIMEOUT_MS = 60_000;
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   /** Dikirim sebagai multipart/form-data; Content-Type diisi otomatis beserta boundary. */
   form?: FormData;
   /** false = endpoint publik (login/register): token tidak disisipkan dan 401 tidak memicu logout otomatis. */
   auth?: boolean;
+  /** Membatalkan request dari luar, mis. cleanup useEffect saat layar ditutup. */
+  signal?: AbortSignal;
 }
 
 type UnauthorizedHandler = () => void;
@@ -33,7 +35,7 @@ async function attachAuthorization(headers: Record<string, string>) {
 
 export async function apiRequest<T>(
   path: string,
-  { method = 'GET', body, form, auth = true }: RequestOptions = {},
+  { method = 'GET', body, form, auth = true, signal }: RequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -41,6 +43,8 @@ export async function apiRequest<T>(
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), form ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
+  const abortFromCaller = () => controller.abort();
+  signal?.addEventListener('abort', abortFromCaller);
 
   let response: Response;
   try {
@@ -55,6 +59,7 @@ export async function apiRequest<T>(
     throw new AuthError('Tidak dapat terhubung ke server. Periksa koneksi internet.', 'NETWORK');
   } finally {
     clearTimeout(timeout);
+    signal?.removeEventListener('abort', abortFromCaller);
   }
 
   const payload: unknown = await response.json().catch(() => null);

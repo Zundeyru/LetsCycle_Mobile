@@ -15,6 +15,7 @@ export default function TabLayout() {
         <Tabs.Screen name="index" />
         <Tabs.Screen name="location" />
         <Tabs.Screen name="marketplace" />
+        <Tabs.Screen name="deposits" />
         <Tabs.Screen name="account" />
       </Tabs>
       <CustomTabBar />

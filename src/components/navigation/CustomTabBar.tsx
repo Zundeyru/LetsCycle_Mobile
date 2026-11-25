@@ -15,6 +15,7 @@ const tabs: {
   { label: 'Home', icon: 'home-variant-outline', href: '/(tabs)', route: 'index' },
   { label: 'Location', icon: 'map-marker-outline', href: '/(tabs)/location', route: 'location' },
   { label: 'Marketplace', icon: 'shopping-outline', href: '/(tabs)/marketplace', route: 'marketplace' },
+  { label: 'Setoran', icon: 'scale-balance', href: '/(tabs)/deposits', route: 'deposits' },
   { label: 'Account', icon: 'account-outline', href: '/(tabs)/account', route: 'account' },
 ];
 
@@ -81,7 +82,8 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 12,
   },
-  item: { minWidth: 61, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  // 5 tab: minWidth 56 agar tetap muat di layar sempit (~320 dp) dengan target sentuh >= 48.
+  item: { minWidth: 56, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 3 },
   label: { color: '#84918A', fontFamily: FontFamily.medium, fontSize: 9 },
   activeLabel: { color: Colors.primary, fontFamily: FontFamily.semiBold },
   activeDot: { position: 'absolute', width: 4, height: 4, top: -6, borderRadius: 2, backgroundColor: Colors.lime },
